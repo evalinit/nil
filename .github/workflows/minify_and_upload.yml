@@ -1,0 +1,38 @@
+name: Build and Upload to GitHub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Minify JavaScript with UglifyJS
+        run: |
+          npm install -g uglify-js
+          uglifyjs src/*.js -o dist/script.min.js --compress --mangle
+
+      - name: Copy to Versioned Folder
+        run: |
+          mkdir -p dist/"version_$GITHUB_RUN_NUMBER"
+          cp dist/script.min.js dist/"version_$GITHUB_RUN_NUMBER/"
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add dist
+          git commit -m "Version $GITHUB_RUN_NUMBER"
+          git push
